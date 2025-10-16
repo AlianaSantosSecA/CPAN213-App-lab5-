@@ -14,22 +14,40 @@ import PlatformButton from '../components/PlatformButton';
 import { getCurrentPlatformColors, isIOS } from '../utils/platform';
 
 const SettingsScreen = () => {
-  const colors = getCurrentPlatformColors();
   const [settings, setSettings] = useState({
     notifications: true,
     darkMode: false,
     locationServices: false,
   });
 
+  const baseColors = getCurrentPlatformColors();
+  const colors = settings.darkMode
+    ? { 
+        ...baseColors, 
+        background: '#121212', 
+        text: '#ffffff',
+        card: '#1e1e1e',
+        border: '#333333',
+        sectionTitle: '#bbbbbb'
+      }
+    : { 
+        ...baseColors, 
+        background: '#f5f5f5', 
+        text: '#000000',
+        card: '#ffffff',
+        border: '#e0e0e0',
+        sectionTitle: '#666666'
+      };
+
   const toggleSetting = (key) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const renderSettingRow = (title, description, value, settingKey) => (
-    <View style={styles.settingRow}>
+    <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
       <View style={styles.settingInfo}>
         <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
-        <Text style={[styles.settingDescription, { color: colors.text }]}>
+        <Text style={[styles.settingDescription, { color: colors.text, opacity: 0.7 }]}>
           {description}
         </Text>
       </View>
@@ -42,10 +60,17 @@ const SettingsScreen = () => {
     </View>
   );
 
+  const renderInfoRow = (label, value) => (
+    <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.infoLabel, { color: colors.text }]}>{label}</Text>
+      <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar
-        barStyle={isIOS ? 'dark-content' : 'light-content'}
+        barStyle={settings.darkMode ? 'light-content' : 'dark-content'}
         backgroundColor={isIOS ? undefined : colors.primary}
       />
 
@@ -53,7 +78,10 @@ const SettingsScreen = () => {
       <View
         style={[
           styles.header,
-          { backgroundColor: isIOS ? colors.background : colors.primary },
+          { 
+            backgroundColor: isIOS ? colors.background : colors.primary,
+            borderBottomColor: isIOS ? colors.border : 'transparent'
+          },
         ]}
       >
         <Text style={[styles.headerTitle, { color: isIOS ? colors.text : '#ffffff' }]}>
@@ -64,11 +92,24 @@ const SettingsScreen = () => {
         </Text>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={[styles.scrollView, { backgroundColor: colors.background }]}>
         {/* General Settings Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>General</Text>
-          <View style={[styles.sectionContent, { backgroundColor: '#ffffff' }]}>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>General</Text>
+          <View style={[
+            styles.sectionContent, 
+            { 
+              backgroundColor: colors.card,
+              ...Platform.select({
+                ios: {
+                  shadowColor: settings.darkMode ? '#000' : '#000',
+                },
+                android: {
+                  elevation: settings.darkMode ? 3 : 2,
+                },
+              }),
+            }
+          ]}>
             {renderSettingRow(
               'Push Notifications',
               'Receive app notifications',
@@ -87,26 +128,25 @@ const SettingsScreen = () => {
 
         {/* Platform Info Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Platform Info</Text>
-          <View style={[styles.sectionContent, { backgroundColor: '#ffffff' }]}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Platform:</Text>
-              <Text style={styles.infoValue}>{isIOS ? 'iOS' : 'Android'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Button Style:</Text>
-              <Text style={styles.infoValue}>
-                {isIOS ? 'Rounded (12pt)' : 'Sharp (4pt)'}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Typography:</Text>
-              <Text style={styles.infoValue}>{isIOS ? 'San Francisco' : 'Roboto'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Depth Effect:</Text>
-              <Text style={styles.infoValue}>{isIOS ? 'Shadow' : 'Elevation'}</Text>
-            </View>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Platform Info</Text>
+          <View style={[
+            styles.sectionContent, 
+            { 
+              backgroundColor: colors.card,
+              ...Platform.select({
+                ios: {
+                  shadowColor: settings.darkMode ? '#000' : '#000',
+                },
+                android: {
+                  elevation: settings.darkMode ? 3 : 2,
+                },
+              }),
+            }
+          ]}>
+            {renderInfoRow('Platform:', isIOS ? 'iOS' : 'Android')}
+            {renderInfoRow('Button Style:', isIOS ? 'Rounded (12pt)' : 'Sharp (4pt)')}
+            {renderInfoRow('Typography:', isIOS ? 'San Francisco' : 'Roboto')}
+            {renderInfoRow('Depth Effect:', isIOS ? 'Shadow' : 'Elevation')}
           </View>
         </View>
 
@@ -115,6 +155,7 @@ const SettingsScreen = () => {
           <PlatformButton
             title="Primary Action"
             variant="primary"
+            darkMode={settings.darkMode}
             onPress={() =>
               Alert.alert('Success', `${isIOS ? 'iOS' : 'Android'} primary button`)
             }
@@ -123,12 +164,14 @@ const SettingsScreen = () => {
           <PlatformButton
             title="Secondary Action"
             variant="secondary"
+            darkMode={settings.darkMode}
             onPress={() => Alert.alert('Info', 'Secondary button pressed')}
           />
           <View style={styles.buttonSpacing} />
           <PlatformButton
             title="Reset Settings"
             variant="primary"
+            darkMode={settings.darkMode}
             onPress={() => {
               Alert.alert('Confirm', 'Reset all settings?', [
                 { text: 'Cancel', style: 'cancel' },
@@ -163,7 +206,6 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: '#c6c6c8',
       },
       android: {
         elevation: 4,
@@ -198,7 +240,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
@@ -214,7 +255,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e0e0e0',
   },
   settingInfo: {
     flex: 1,
@@ -227,23 +267,19 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 14,
-    opacity: 0.6,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e0e0e0',
   },
   infoLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
   },
   infoValue: {
     fontSize: 14,
-    color: '#333',
   },
   buttonSpacing: {
     height: 12,
